@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance Log</title>
+<style>
+:root{--bg:#fff0f6;--card:#fff;--tx:#3a1428;--mu:#8a5a72;--bd:#f6cfe0;--pri:#e91e8c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241019;--card:#331824;--tx:#ffe8f3;--mu:#d9a3bd;--bd:#55263c;--pri:#ff4fa8}}
+:root[data-theme="dark"]{--bg:#241019;--card:#331824;--tx:#ffe8f3;--mu:#d9a3bd;--bd:#55263c;--pri:#ff4fa8}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:4px 0 2px}h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mu);margin:8px 0 4px}
+input,select,button{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+button{cursor:pointer;border:0;background:var(--pri);color:#fff;font-weight:600}
+button.sec{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}.tabs button{background:var(--card);color:var(--mu);border:1px solid var(--bd);white-space:nowrap;padding:10px 14px;width:auto;flex:1}
+.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.clock{text-align:center;margin-bottom:8px}.clock b{font-size:34px;display:block}.clock span{color:var(--mu)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.grid button{padding:16px 6px;font-size:17px;line-height:1.2;color:#fff}
+.grid button small{display:block;font-weight:400;font-size:13px;margin-top:3px}
+.b1{background:#0a2f73!important}.b2{background:#0f4aa8!important}.b3{background:#1a65d0!important}.b4{background:#2f7fe0!important}.b5{background:#4a96e8!important}
+.grid .done{opacity:.55}.grid button:last-child{grid-column:1/-1}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--bd)}
+.row:first-child{border-top:0}.row .x{width:36px;padding:6px;background:none;color:var(--mu);border:1px solid var(--bd)}
+.muted{color:var(--mu);font-size:14px}.add{display:flex;gap:8px}.add button{width:90px}
+#msg{min-height:20px;font-size:14px;margin-top:8px;text-align:center;color:var(--pri)}
+.day{border-top:1px solid var(--bd);padding:10px 0}.day:first-child{border-top:0}.day b{display:block;margin-bottom:4px}
+.day .r{display:flex;justify-content:space-between;font-size:15px;padding:2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🕘 Attendance Log 💙</h1>
+<div id="st" class="muted" style="margin-bottom:10px">Connecting…</div>
+<div class="tabs" id="tabs">
+  <button data-t="clock" class="on">Clock</button><button data-t="my">My Logs</button>
+  <button data-t="all" id="tAll" hidden>All Logs</button><button data-t="names" id="tNames" hidden>Names</button>
+</div>
+
+<div id="clock">
+ <div class="card">
+  <div class="clock"><b id="clk">--:--</b><span id="dt"></span></div>
+  <div id="setup" hidden>
+    <div style="font-weight:600">Welcome! Who are you?</div>
+    <label for="nm">Select your name (one time only)</label><select id="nm"></select>
+    <div style="margin-top:10px"><button id="saveN">Save my name</button></div>
+  </div>
+  <div id="who" hidden style="text-align:center"><div class="muted">Logged in as</div><b id="whoN" style="font-size:20px"></b><br>
+    <button class="sec" id="chg" style="width:auto;padding:6px 14px;margin-top:6px;font-weight:400">Not you? Change name</button></div>
+  <div class="grid" id="btns" hidden></div>
+  <div id="msg"></div>
+ </div>
+</div>
+
+<div id="my" hidden>
+ <div class="card"><h2>My records</h2>
+  <label for="mm" style="margin-top:0">Month</label><input type="month" id="mm">
+  <div id="myl" style="margin-top:8px"></div>
+  <div style="margin-top:10px"><button class="sec" id="xm">⬇ Download my logs (Excel)</button></div>
+ </div>
+</div>
+
+<div id="all" hidden>
+ <div class="card"><h2>All employee logs</h2>
+  <label for="vd" style="margin-top:0">Date</label><input type="date" id="vd">
+  <div id="list" style="margin-top:8px"></div>
+ </div>
+ <div class="card"><h2>Download</h2>
+  <button id="xl">⬇ Download Excel (all dates)</button>
+  <div style="margin-top:8px"><button class="sec" id="xmn">This month only</button></div>
+  <div style="margin-top:8px"><button class="sec" id="xd">This date only</button></div>
+ </div>
+</div>
+
+<div id="names" hidden>
+ <div class="card"><h2>Employee names</h2>
+  <p class="muted" style="margin-top:0">Staff pick their name from this list the first time they open the app.</p>
+  <div class="add"><input id="newn" type="text" placeholder="Add a name"><button id="addn">Add</button></div>
+  <div id="nlist" style="margin-top:8px"></div>
+ </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function ask(text,yes){return new Promise(res=>{
+  const o=document.createElement("div");o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99";
+  o.innerHTML='<div style="background:var(--card);color:var(--tx);border-radius:14px;padding:18px;max-width:340px;width:100%"><p style="margin:0 0 14px"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="sec" id="aN">Cancel</button><button id="aY"></button></div></div>';
+  o.querySelector("p").textContent=text;o.querySelector("#aY").textContent=yes||"Yes, delete";document.body.appendChild(o);
+  const done=v=>{o.remove();res(v)};o.querySelector("#aN").onclick=()=>done(false);o.querySelector("#aY").onclick=()=>done(true)})}
+const A=[["ami","Clock In - AM","b1"],["lo","Clock Out - Lunch","b2"],["li","Clock In - Lunch","b3"],["po","Clock Out - PM","b4"],["ot","Clock Out - OT","b5"]];
+const LBL={amo:"AM Out",pi:"PM In",...Object.fromEntries(A.map(a=>[a[0],a[1]]))};
+let store=null,uid=null,admin=false,me="",names=[],logs=[],ready=false;
+const p2=n=>String(n).padStart(2,"0");
+const dstr=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
+const tstr=d=>p2(d.getHours())+":"+p2(d.getMinutes())+":"+p2(d.getSeconds());
+const t12=t=>{const[h,m]=t.split(":").map(Number);return (h%12||12)+":"+p2(m)+" "+(h<12?"AM":"PM")};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const st=t=>{$("st").textContent=t};
+function msg(t){$("msg").textContent=t;setTimeout(()=>{if($("msg").textContent===t)$("msg").textContent=""},3500)}
+$("vd").value=dstr(new Date());$("mm").value=dstr(new Date()).slice(0,7);
+function tick(){const d=new Date();$("clk").textContent=t12(tstr(d));$("dt").textContent=d.toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+setInterval(tick,1000);tick();
+const nid=n=>n.replace(/[^a-zA-Z0-9]/g,"_");
+const lid=(d,n,k)=>d+"_"+nid(n)+"_"+k;
+
+document.getElementById("tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  for(const x of document.querySelectorAll("#tabs button"))x.className=x===b?"on":"";
+  for(const t of ["clock","my","all","names"])$(t).hidden=t!==b.dataset.t};
+
+function render(){
+  if(!ready)return;
+  $("tAll").hidden=!admin;$("tNames").hidden=!admin;
+  const has=!!me;
+  $("setup").hidden=has||!uid;$("who").hidden=!has;$("btns").hidden=!has;$("whoN").textContent=me;
+  const sel=$("nm"),cur=sel.value;
+  sel.innerHTML='<option value="">'+(names.length?"— Choose your name —":"No names yet. Ask the owner.")+'</option>'+names.map(n=>`<option>${esc(n)}</option>`).join("");
+  sel.value=names.includes(cur)?cur:"";
+  const today=dstr(new Date());
+  $("btns").innerHTML=A.map(([k,l,c])=>{const x=has&&logs.find(z=>z.id===lid(today,me,k));
+    return `<button class="${c}${x?" done":""}" data-k="${k}">${l}<small>${x?"✓ "+t12(x.t):"Tap to log"}</small></button>`}).join("");
+  // my logs
+  const mm=$("mm").value,mine=logs.filter(x=>x.n===me&&x.d.startsWith(mm)),days=[...new Set(mine.map(x=>x.d))].sort().reverse();
+  $("myl").innerHTML=!has?'<div class="muted">Select your name on the Clock tab first.</div>':days.length?days.map(d=>`<div class="day"><b>${new Date(d+"T00:00").toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"})}</b>${A.map(([k,l])=>{const x=mine.find(z=>z.d===d&&z.k===k);return `<div class="r"><span>${l}</span><span>${x?t12(x.t):"—"}</span></div>`}).join("")}</div>`).join(""):'<div class="muted">No logs this month.</div>';
+  if(admin){
+    const vd=$("vd").value,L=logs.filter(x=>x.d===vd).sort((a,b)=>a.n.localeCompare(b.n)||(a.ts-b.ts));
+    $("list").innerHTML=L.length?L.map(x=>`<div class="row"><span><b>${esc(x.n)}</b><br><span class="muted">${LBL[x.k]||x.k}</span></span><b>${t12(x.t)}</b><button class="x" data-id="${x.id}">✕</button></div>`).join(""):'<div class="muted">No logs for this date.</div>';
+    $("nlist").innerHTML=names.length?names.map((n,i)=>`<div class="row"><span>${esc(n)}</span><button class="x" data-n="${i}">✕</button></div>`).join(""):'<div class="muted">No names yet.</div>';
+  }
+}
+$("mm").onchange=render;$("vd").onchange=render;
+
+$("saveN").onclick=async()=>{const v=$("nm").value;if(!v)return;
+  try{await store.doc("data/users/"+uid+"/profile").set({name:v})}catch(e){st("Could not save your name.")}};
+$("chg").onclick=async()=>{if(!(await ask("Change your name?","Yes, change")))return;
+  try{await store.doc("data/users/"+uid+"/profile").delete()}catch(e){}};
+
+$("btns").onclick=async e=>{
+  const b=e.target.closest("button");if(!b||!me)return;
+  const k=b.dataset.k,now=new Date(),d=dstr(now),id=lid(d,me,k);
+  if(logs.find(z=>z.id===id)&&!(await ask("You already logged "+LBL[k]+" today. Replace it with the current time?","Yes, replace")))return;
+  const o={id,d,n:me,k,t:tstr(now),ts:now.getTime(),u:uid};
+  try{await store.collection("logs").doc(id).set(o);msg("✓ "+LBL[k]+" at "+t12(o.t))}catch(err){msg("Could not save. Check your connection or access.")}
+};
+$("list").onclick=async e=>{const b=e.target.closest(".x");if(!b||!(await ask("Delete this log?")))return;
+  try{await store.collection("logs").doc(b.dataset.id).delete()}catch(err){}};
+const saveNames=async()=>{try{await store.doc("config/names").set({list:names})}catch(e){st("Could not save names.")}};
+$("addn").onclick=()=>{const v=$("newn").value.trim();if(!v)return;
+  if(names.some(n=>n.toLowerCase()===v.toLowerCase()))return;
+  names=[...names,v].sort((a,b)=>a.localeCompare(b));$("newn").value="";saveNames();render()};
+$("nlist").onclick=async e=>{const b=e.target.closest(".x");if(!b||!(await ask("Remove this name? Past logs are kept.")))return;
+  names=names.filter((_,i)=>i!==+b.dataset.n);saveNames();render()};
+
+function build(L){
+  L=L.slice().sort((a,b)=>a.ts-b.ts);
+  const wb=XLSX.utils.book_new(),grp={};
+  L.forEach(x=>{const g=x.d+"|"+x.n;(grp[g]=grp[g]||{d:x.d,n:x.n})[x.k]=x.t});
+  const R=Object.values(grp).sort((a,b)=>a.d.localeCompare(b.d)||a.n.localeCompare(b.n));
+  const fr=t=>{if(!t)return null;const[h,m,s]=t.split(":").map(Number);return (h*3600+m*60+s)/86400};
+  const tc=v=>v==null?null:{t:"n",v,z:"h:mm AM/PM"};
+  const hh=(a,b)=>a!=null&&b!=null?(b-a)*24:0,r2=n=>Math.round(n*100)/100;
+  const N=R.length+1,DA="'Daily Attendance'!";
+  const rows=[["Date","Name","Clock In - AM","Clock Out - Lunch","Clock In - Lunch","Clock Out - PM","Clock Out - OT","Regular Hours","OT Hours","Total Hours","Remarks"]];
+  const tot={reg:0,ot:0};
+  R.forEach((r,idx)=>{
+    const n=idx+2,c=fr(r.ami),d=fr(r.lo),e=fr(r.li),f=fr(r.po),g=fr(r.ot);
+    const reg=r2((d==null&&e==null&&c!=null&&f!=null)?(f-c)*24:hh(c,d)+hh(e,f)),ot=r2(hh(f,g));
+    tot.reg+=reg;tot.ot+=ot;
+    rows.push([r.d,r.n,tc(c),tc(d),tc(e),tc(f),tc(g),
+      {t:"n",v:reg,z:"0.00",f:`ROUND(IF(AND(D${n}="",E${n}="",C${n}<>"",F${n}<>""),(F${n}-C${n})*24,IF(AND(C${n}<>"",D${n}<>""),(D${n}-C${n})*24,0)+IF(AND(E${n}<>"",F${n}<>""),(F${n}-E${n})*24,0)),2)`},
+      {t:"n",v:ot,z:"0.00",f:`ROUND(IF(AND(F${n}<>"",G${n}<>""),(G${n}-F${n})*24,0),2)`},
+      {t:"n",v:r2(reg+ot),z:"0.00",f:`ROUND(H${n}+I${n},2)`},
+      {t:"s",v:(c==null||f==null)?"Incomplete":"",f:`IF(OR(C${n}="",F${n}=""),"Incomplete","")`}]);
+  });
+  rows.push(["TOTAL","",null,null,null,null,null,{t:"n",v:r2(tot.reg),z:"0.00",f:`SUM(H2:H${N})`},{t:"n",v:r2(tot.ot),z:"0.00",f:`SUM(I2:I${N})`},{t:"n",v:r2(tot.reg+tot.ot),z:"0.00",f:`SUM(J2:J${N})`}]);
+  const s1=XLSX.utils.aoa_to_sheet(rows);s1["!cols"]=[12,22,14,16,15,15,15,14,10,12,12].map(w=>({wch:w}));
+  // summary per employee
+  const nm=[...new Set(R.map(r=>r.n))].sort((a,b)=>a.localeCompare(b));
+  const sr=[["Employee","Days Worked","Regular Hours","OT Hours","Total Hours"]];
+  const sum={};R.forEach(r=>{const c=fr(r.ami),d=fr(r.lo),e=fr(r.li),f=fr(r.po),g=fr(r.ot);
+    const reg=(d==null&&e==null&&c!=null&&f!=null)?(f-c)*24:hh(c,d)+hh(e,f),ot=hh(f,g),o=sum[r.n]=sum[r.n]||{days:0,reg:0,ot:0};
+    if(reg+ot>0)o.days++;o.reg+=reg;o.ot+=ot});
+  nm.forEach((x,i)=>{const n=i+2,o=sum[x];
+    sr.push([x,{t:"n",v:o.days,f:`COUNTIFS(${DA}$B$2:$B$${N},A${n},${DA}$J$2:$J$${N},">0")`},
+      {t:"n",v:r2(o.reg),z:"0.00",f:`SUMIFS(${DA}$H$2:$H$${N},${DA}$B$2:$B$${N},A${n})`},
+      {t:"n",v:r2(o.ot),z:"0.00",f:`SUMIFS(${DA}$I$2:$I$${N},${DA}$B$2:$B$${N},A${n})`},
+      {t:"n",v:r2(o.reg+o.ot),z:"0.00",f:`SUMIFS(${DA}$J$2:$J$${N},${DA}$B$2:$B$${N},A${n})`}])});
+  const e=nm.length+1,T=nm.reduce((a,x)=>({d:a.d+sum[x].days,r:a.r+sum[x].reg,o:a.o+sum[x].ot}),{d:0,r:0,o:0});
+  sr.push(["TOTAL",{t:"n",v:T.d,f:`SUM(B2:B${e})`},{t:"n",v:r2(T.r),z:"0.00",f:`SUM(C2:C${e})`},{t:"n",v:r2(T.o),z:"0.00",f:`SUM(D2:D${e})`},{t:"n",v:r2(T.r+T.o),z:"0.00",f:`SUM(E2:E${e})`}]);
+  const s0=XLSX.utils.aoa_to_sheet(sr);s0["!cols"]=[24,13,15,11,13].map(w=>({wch:w}));
+  const s2=XLSX.utils.aoa_to_sheet([["Date","Name","Action","Time"],...L.map(x=>[x.d,x.n,LBL[x.k]||x.k,t12(x.t)])]);s2["!cols"]=[12,22,18,12].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,s0,"Summary");XLSX.utils.book_append_sheet(wb,s1,"Daily Attendance");XLSX.utils.book_append_sheet(wb,s2,"All Logs");return wb;
+}
+async function buildPretty(L){
+  L=L.slice().sort((a,b)=>a.ts-b.ts);
+  const grp={};L.forEach(x=>{const g=x.d+"|"+x.n;(grp[g]=grp[g]||{d:x.d,n:x.n})[x.k]=x.t});
+  const R=Object.values(grp).sort((a,b)=>a.d.localeCompare(b.d)||a.n.localeCompare(b.n));
+  const D=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))};
+  const fd=s=>D(s).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric",timeZone:"UTC"});
+  const fr=t=>{if(!t)return null;const[h,m,s]=t.split(":").map(Number);return (h*3600+m*60+s)/86400};
+  const hh=(a,b)=>a!=null&&b!=null?(b-a)*24:0,r2=n=>Math.round(n*100)/100;
+  const ds=L.map(x=>x.d).sort();
+  const period=ds.length?(ds[0]===ds[ds.length-1]?fd(ds[0]):fd(ds[0])+" to "+fd(ds[ds.length-1])):"";
+  const sub="Period: "+period+"     |     Generated: "+new Date().toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+  const wb=new ExcelJS.Workbook();wb.creator="AQUABEST";
+  const HR="0.00",DT="mmm dd, yyyy",TM="h:mm AM/PM";
+  const thin={style:"thin",color:{argb:"FFF48FB1"}},BD={top:thin,bottom:thin,left:thin,right:thin};
+  const fill=c=>({type:"pattern",pattern:"solid",fgColor:{argb:c}});
+  const val=c=>c&&typeof c==="object"&&"result" in c?c.result:c;
+  const colL=i=>String.fromCharCode(65+i);
+  function sheet(name,title,cols,rows){
+    const n=cols.length,ws=wb.addWorksheet(name,{views:[{state:"frozen",ySplit:4,showGridLines:false}],pageSetup:{orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0}});
+    cols.forEach((c,i)=>ws.getColumn(i+1).width=c.w);
+    ws.mergeCells(1,1,1,n);const t=ws.getCell(1,1);t.value=title;t.font={name:"Calibri",bold:true,size:16,color:{argb:"FFFFFFFF"}};t.fill=fill("FFAD1457");t.alignment={vertical:"middle",horizontal:"left",indent:1};ws.getRow(1).height=32;
+    ws.mergeCells(2,1,2,n);const u=ws.getCell(2,1);u.value=sub;u.font={name:"Calibri",italic:true,size:10,color:{argb:"FF880E4F"}};u.fill=fill("FFFCE4EC");u.alignment={vertical:"middle",horizontal:"left",indent:1};ws.getRow(2).height=20;
+    ws.getRow(3).height=6;
+    const h=ws.getRow(4);h.height=30;
+    cols.forEach((c,i)=>{const x=h.getCell(i+1);x.value=c.h;x.font={name:"Calibri",bold:true,size:11,color:{argb:"FFFFFFFF"}};x.fill=fill("FFEC407A");x.alignment={vertical:"middle",horizontal:"center",wrapText:true};x.border=BD});
+    if(!rows.length){ws.mergeCells(5,1,5,n);const x=ws.getCell(5,1);x.value="No records";x.font={name:"Calibri",italic:true,color:{argb:"FF8A5A72"}};x.alignment={horizontal:"center"};return}
+    rows.forEach((r,ri)=>{const row=ws.getRow(5+ri);row.height=20;
+      cols.forEach((c,i)=>{const x=row.getCell(i+1);x.value=r[i]===""?null:r[i];if(c.fmt)x.numFmt=c.fmt;
+        const bad=val(r[i])==="Incomplete";
+        x.font={name:"Calibri",size:11,bold:bad,color:{argb:bad?"FFC62828":"FF3A1428"}};x.fill=fill(ri%2?"FFFCE4EC":"FFFFFFFF");x.border=BD;x.alignment={vertical:"middle",horizontal:c.al||"left",indent:c.al?0:1}})});
+    const last=4+rows.length,tr=ws.getRow(last+1);tr.height=24;
+    cols.forEach((c,i)=>{const x=tr.getCell(i+1);
+      if(i===0)x.value="TOTAL";
+      else if(c.sum){const tot=rows.reduce((a,r)=>a+(+val(r[i])||0),0);x.value={formula:`SUM(${colL(i)}5:${colL(i)}${last})`,result:r2(tot)};if(c.fmt)x.numFmt=c.fmt}
+      x.font={name:"Calibri",bold:true,size:12,color:{argb:"FF880E4F"}};x.fill=fill("FFF8BBD0");
+      x.border={top:{style:"medium",color:{argb:"FFAD1457"}},bottom:{style:"medium",color:{argb:"FFAD1457"}},left:thin,right:thin};
+      x.alignment={vertical:"middle",horizontal:i===0?"left":(c.al||"left"),indent:i===0?1:0}});
+    ws.autoFilter={from:{row:4,column:1},to:{row:4+rows.length,column:n}};
+  }
+  const N=R.length+4,DA="'Daily Attendance'!";
+  const calc=r=>{const c=fr(r.ami),d=fr(r.lo),e=fr(r.li),f=fr(r.po),g=fr(r.ot);
+    return {c,d,e,f,g,reg:r2((d==null&&e==null&&c!=null&&f!=null)?(f-c)*24:hh(c,d)+hh(e,f)),ot:r2(hh(f,g))}};
+  const sum={};
+  const dRows=R.map((r,i)=>{const n=5+i,k=calc(r),o=sum[r.n]=sum[r.n]||{days:0,reg:0,ot:0};
+    if(k.reg+k.ot>0)o.days++;o.reg+=k.reg;o.ot+=k.ot;
+    return [D(r.d),r.n,k.c,k.d,k.e,k.f,k.g,
+      {formula:`ROUND(IF(AND(D${n}="",E${n}="",C${n}<>"",F${n}<>""),(F${n}-C${n})*24,IF(AND(C${n}<>"",D${n}<>""),(D${n}-C${n})*24,0)+IF(AND(E${n}<>"",F${n}<>""),(F${n}-E${n})*24,0)),2)`,result:k.reg},
+      {formula:`ROUND(IF(AND(F${n}<>"",G${n}<>""),(G${n}-F${n})*24,0),2)`,result:k.ot},
+      {formula:`ROUND(H${n}+I${n},2)`,result:r2(k.reg+k.ot)},
+      {formula:`IF(OR(C${n}="",F${n}=""),"Incomplete","")`,result:(k.c==null||k.f==null)?"Incomplete":""}]});
+  const nm=Object.keys(sum).sort((a,b)=>a.localeCompare(b));
+  const sRows=nm.map((x,i)=>{const n=5+i,o=sum[x],rg=(c)=>`${DA}$${c}$5:$${c}$${N}`;
+    return [x,{formula:`COUNTIFS(${rg("B")},A${n},${rg("J")},">0")`,result:o.days},
+      {formula:`SUMIFS(${rg("H")},${rg("B")},A${n})`,result:r2(o.reg)},
+      {formula:`SUMIFS(${rg("I")},${rg("B")},A${n})`,result:r2(o.ot)},
+      {formula:`SUMIFS(${rg("J")},${rg("B")},A${n})`,result:r2(o.reg+o.ot)}]});
+  sheet("Summary","AQUABEST  ·  Attendance Summary",[
+    {h:"Employee",w:28},{h:"Days Worked",w:14,fmt:"0",al:"center",sum:1},{h:"Regular Hours",w:16,fmt:HR,al:"center",sum:1},
+    {h:"OT Hours",w:13,fmt:HR,al:"center",sum:1},{h:"Total Hours",w:14,fmt:HR,al:"center",sum:1}],sRows);
+  const tc={w:15,fmt:TM,al:"center"};
+  sheet("Daily Attendance","AQUABEST  ·  Daily Attendance & Worked Hours",[
+    {h:"Date",w:14,fmt:DT,al:"center"},{h:"Name",w:24},{h:"Clock In - AM",...tc},{h:"Clock Out - Lunch",...tc},{h:"Clock In - Lunch",...tc},
+    {h:"Clock Out - PM",...tc},{h:"Clock Out - OT",...tc},{h:"Regular Hours",w:13,fmt:HR,al:"center",sum:1},{h:"OT Hours",w:11,fmt:HR,al:"center",sum:1},
+    {h:"Total Hours",w:12,fmt:HR,al:"center",sum:1},{h:"Remarks",w:13,al:"center"}],dRows);
+  sheet("All Logs","AQUABEST  ·  All Clock Logs",[
+    {h:"Date",w:14,fmt:DT,al:"center"},{h:"Name",w:26},{h:"Action",w:22},{h:"Time",w:14,fmt:TM,al:"center"}],
+    L.map(x=>[D(x.d),x.n,LBL[x.k]||x.k,fr(x.t)]));
+  return await wb.xlsx.writeBuffer();
+}
+async function dl(L,name){
+  if(!L.length)return st("Nothing to export yet.");
+  if(typeof XLSX==="undefined"&&typeof ExcelJS==="undefined")return st("Excel library did not load.");
+  let dls=null;try{dls=await claude.use("downloads")}catch(e){}
+  if(!dls)return st("Download is unavailable here.");
+  try{await dls.save({filename:name+".xlsx",data:typeof ExcelJS!=="undefined"?await buildPretty(L):XLSX.write(build(L),{bookType:"xlsx",type:"array"})});st("Saved ✓")}
+  catch(e){st(e&&e.code==="declined"?"Download cancelled.":"Could not save the file.")}
+}
+$("xl").onclick=()=>dl(logs,"attendance-all");
+$("xmn").onclick=()=>{const m=$("vd").value.slice(0,7);dl(logs.filter(x=>x.d.startsWith(m)),"attendance-"+m)};
+$("xd").onclick=()=>dl(logs.filter(x=>x.d===$("vd").value),"attendance-"+$("vd").value);
+$("xm").onclick=()=>dl(logs.filter(x=>x.n===me),"attendance-"+nid(me||"mine"));
+
+(async()=>{
+  let user=null;
+  try{store=await claude.use("db");user=await claude.use("user")}catch(e){}
+  if(!store||!user){st("Please open this link while signed in to Claude.");return}
+  try{uid=await user.id();admin=await user.canEdit()}catch(e){}
+  if(!uid){st("You have view-only access. Ask the owner to give you Contributor access.");return}
+  const timer=setTimeout(()=>{if(!ready)st("Can't reach the server yet. Showing what is available.")},10000);
+  const got=()=>{ready=true;clearTimeout(timer);st("🟢 Synced")};
+  const err=()=>st("Sync problem. Check your connection or access.");
+  store.collection("logs").onSnapshot(s=>{logs=s.docs.map(x=>({id:x.id,...x.data()}));got();render()},err);
+  store.doc("config/names").onSnapshot(s=>{const d=s.exists?s.data():null;names=(d&&d.list)||[];got();render()},err);
+  store.doc("data/users/"+uid+"/profile").onSnapshot(s=>{me=(s.exists&&s.data().name)||"";got();render()},err);
+})();
+</script>
+</body>
+</html>
